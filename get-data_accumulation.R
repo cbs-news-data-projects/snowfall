@@ -44,3 +44,23 @@ out_file <- file.path("data", paste0("snow_", date_tag, "_3857.tif"))
 writeRaster(snow_raster_3857, out_file, overwrite=TRUE)
 
 message("✅ Reprojected raster saved to ", out_file)
+
+
+# ----------------------------
+# 5. Pre-color the raster
+# ----------------------------
+# Define breaks (snowfall in inches or mm) and colors
+breaks <- c(0, 0.5, 1, 2, 5, 10, 20)  # adjust as needed
+colors <- c("#ffffff", "#cce0ff", "#99c2ff", "#6699ff", "#3366ff", "#0033cc")
+
+# Classify raster into color indices
+snow_class <- classify(snow_raster_3857, cbind(breaks[-length(breaks)], breaks[-1], 1:length(colors)))
+
+# Optional: set color table for visualization
+coltab(snow_class) <- colors
+
+# Save colored raster inside project static folder for Tileserver
+colored_file <- file.path("static/tileserver", paste0("snow_", date_tag, "_colored.tif"))
+writeRaster(snow_class, colored_file, overwrite=TRUE)
+
+message("✅ Colored raster saved to ", colored_file)

@@ -1,76 +1,48 @@
-name: Build 72hr accumulation files
+name: Build Snowfall MBTiles
 
 on:
+  workflow_dispatch:   # allows manual trigger
   schedule:
-    - cron: "0 13 * * *"  # daily at 13 UTC
-  workflow_dispatch:
+    - cron: '0 13 * * *' # run daily at 12 UTC + 1 hour buffer
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout repo
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      # Install system dependencies
       - name: Install GDAL
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gdal-bin \
-            libgdal-dev \
-            libgeos-dev \
-            libproj-dev \
-            libudunits2-dev \
-            libcurl4-openssl-dev \
-            libssl-dev \
-            libxml2-dev \
-            python3-gdal
+          sudo apt update
+          sudo apt install -y gdal-bin
 
-      # Setup R
-      - uses: r-lib/actions/setup-r@v2
-
-      # Install required R packages
-      - name: Install R packages
+      - name: Download snowfall TIFF
         run: |
-          Rscript -e 'install.packages(c("terra","httr","lubridate","sf"), repos="https://cloud.r-project.org/")'
-          
-      # Run the R pipeline to download + reproject TIFF
-      - name: Build snowfall raster
-        run: |
-          Rscript get-data_accumulation.R
+          TODAY=$(date +%Y%m%d)
+          YEAR_MONTH=$(date +%Y%m)
+          mkdir -p tileserver
+          URL="https://www.nohrsc.noaa.gov/snowfall/data/${YEAR_MONTH}/sfav2_CONUS_72h_${TODAY}12.tif"
+          echo "Downloading $URL"
+          wget -O tileserver/snow_${TODAY}.tif "$URL"
 
-      # Scale and convert to 8-bit VRT for tiles
-      - name: Scale raster and create VRT
+      - name: Reproject to Web Mercator
         run: |
-          # Use latest 3857 raster
-          FILE=$(ls data/*_3857.tif | sort | tail -n1)
-          echo "Scaling $FILE to 0-254 and writing VRT..."
-          gdal_translate \
-            -of VRT \
-            -ot Byte \
-            -a_nodata 255 \
-            -scale 0 100 0 254 \
-            "$FILE" \
-            data/temp.vrt
+          TODAY=$(date +%Y%m%d)
+          gdalwarp -t_srs EPSG:3857 \
+            tileserver/snow_${TODAY}.tif \
+            tileserver/snow_${TODAY}_3857.tif
 
-      # Generate tiles with gdal2tiles
-      - name: Generate tiles
+      - name: Convert to MBTiles
         run: |
-          mkdir -p tiles_output
-          gdal2tiles.py \
-            -z 0-8 \
-            -r bilinear \
-            data/temp.vrt \
-            tiles_output
+          TODAY=$(date +%Y%m%d)
+          gdal_translate -of MBTILES \
+            tileserver/snow_${TODAY}_3857.tif \
+            tileserver/snow_${TODAY}.mbtiles
 
-      - name: Deploy tiles to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: tiles_output
-          publish_branch: gh-pages
-          allow_empty_commit: true
-          destination_dir: tiles_output
-          
+      - name: Commit MBTiles
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add tileserver/*.mbtiles
+          git commit -m "Update snow ${TODAY}" || echo "No changes"
+          git push
