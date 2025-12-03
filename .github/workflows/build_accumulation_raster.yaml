@@ -65,16 +65,11 @@ jobs:
             data/temp.vrt \
             tiles_output
 
-      # Upload tiles as artifact (optional)
-      - name: Upload tiles artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: snowfall-tiles
-          path: tiles_output/
-          
+      # Deploy tiles to GitHub Pages
       - name: Deploy tiles to GitHub Pages
         uses: peaceiris/actions-gh-pages@v7
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: tiles_output
           publish_branch: gh-pages
+          
