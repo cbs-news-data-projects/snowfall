@@ -67,7 +67,7 @@ jobs:
 
       # Deploy tiles to GitHub Pages
       - name: Deploy tiles to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v7
+        uses: peaceiris/actions-gh-pages@v6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: tiles_output
