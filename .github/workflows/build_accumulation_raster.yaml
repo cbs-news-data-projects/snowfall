@@ -65,11 +65,12 @@ jobs:
             data/temp.vrt \
             tiles_output
 
-      # Deploy tiles to GitHub Pages
       - name: Deploy tiles to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: tiles_output
           publish_branch: gh-pages
+          allow_empty_commit: true
+          destination_dir: tiles_output
           
