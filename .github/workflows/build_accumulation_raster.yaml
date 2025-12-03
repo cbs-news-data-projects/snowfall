@@ -58,7 +58,7 @@ jobs:
 
       # Upload tiles as artifact (optional)
       - name: Upload tiles artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snowfall-tiles
           path: tiles_output/
