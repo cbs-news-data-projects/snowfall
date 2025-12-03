@@ -25,7 +25,7 @@ jobs:
       # Install required R packages
       - name: Install R packages
         run: |
-          Rscript -e 'install.packages(c("terra","httr","lubridate"))'
+          Rscript -e 'install.packages(c("terra","httr","lubridate", "sf"))'
 
       # Run the R pipeline to download + reproject TIFF
       - name: Build snowfall raster
