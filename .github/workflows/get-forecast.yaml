@@ -1,0 +1,38 @@
+name: Update Snow Forecast
+
+on:
+  schedule:
+    # Runs daily at 5 AM, 11 AM, 5 PM, 11 PM EST
+    - cron: "0 4,10,16,22 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-forecast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libgdal-dev libproj-dev libgeos-dev
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("httr", "terra", "jsonlite"), repos="https://cloud.r-project.org")'
+
+      - name: Run forecast script
+        run: Rscript get-forecast.R
+
+      - name: Commit and push updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions"
+          git add .
+          git diff --cached --quiet || git commit -m "Auto update forecast data"
+          git push
