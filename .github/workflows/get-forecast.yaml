@@ -1,9 +1,8 @@
-name: Update Snow Forecast
+name: Update 3-day snow forecast
 
 on:
   schedule:
-    # 5 AM, 11 AM, 5 PM, 11 PM EST (UTC-5)
-    - cron: "0 4,10,16,22 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
