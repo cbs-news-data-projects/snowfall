@@ -2,7 +2,7 @@ name: Update Snow Forecast
 
 on:
   schedule:
-    # Runs daily at 5 AM, 11 AM, 5 PM, 11 PM EST
+    # 5 AM, 11 AM, 5 PM, 11 PM EST (UTC-5)
     - cron: "0 4,10,16,22 * * *"
   workflow_dispatch:
 
@@ -29,10 +29,17 @@ jobs:
       - name: Run forecast script
         run: Rscript get-forecast.R
 
-      - name: Commit and push updates
+      - name: Create last-update.json
+        run: |
+          echo "{
+            \"last_updated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",
+            \"last_updated_est\": \"$(TZ=America/New_York date +"%Y-%m-%d %I:%M %p %Z")\"
+          }" > last-update.json
+
+      - name: Commit and push if changed
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
           git add .
-          git diff --cached --quiet || git commit -m "Auto update forecast data"
+          git diff --cached --quiet || git commit -m "Auto update forecast + timestamp"
           git push
