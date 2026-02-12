@@ -1,4 +1,4 @@
-name: Update 3-day snow forecast
+name: Update 3-day snow forecast and accumulation
 
 on:
   schedule:
@@ -28,12 +28,8 @@ jobs:
       - name: Run forecast script
         run: Rscript get-forecast.R
 
-      - name: Create last-update.json
-        run: |
-          echo "{
-            \"last_updated\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\",
-            \"last_updated_est\": \"$(TZ=America/New_York date +"%Y-%m-%d %I:%M %p %Z")\"
-          }" > last-update.json
+      - name: Run accumulation script
+        run: Rscript get-accumulation.R
 
       - name: Commit and push if changed
         run: |
