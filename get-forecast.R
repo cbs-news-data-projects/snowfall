@@ -56,14 +56,14 @@ cat(sprintf("If Layer %d < Sum, layers are INDIVIDUAL periods (sum them)\n", n_l
 cat("\n")
 
 # ----------------------------
-# 3. Sum first 12 layers (3-day total, 6h per layer)
+# 3. Use LAST layer only (cumulative total)
 # ----------------------------
-snow_3day <- sum(snow[[1:n_layers_to_use]])
+snow_total <- snow[[n_layers_to_use]]
 
 # ----------------------------
 # 4. Convert meters → inches
 # ----------------------------
-snow_3day_in <- snow_3day * 39.3701
+snow_total_in <- snow_total * 39.3701
 
 # ----------------------------
 # 5. Reproject to WGS84
