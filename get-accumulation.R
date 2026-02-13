@@ -39,9 +39,9 @@ snow_3857[snow_3857 < 0.01] <- 0
 # 7. Clamp extreme values
 snow_3857[snow_3857 > 40] <- 40
 
-# Define color mapping function with NA handling
+# Define color mapping function - returns NA for no data/near zero
 get_color <- function(snowfall) {
-  if (is.na(snowfall) || snowfall < 0.01) return("#c7d6ef")  # background / near zero
+  if (is.na(snowfall) || snowfall < 0.01) return(NA)  # transparent
   if (snowfall < 2) return("#8faedf")
   if (snowfall < 3) return("#5786d0")
   if (snowfall < 4) return("#1f5dc0")
@@ -62,10 +62,11 @@ snow_rgb <- rast(nlyrs = 3, crs = crs(snow_3857),
 # Get flattened values
 vals <- values(snow_3857)
 
-# Map each value to RGB
-cols <- col2rgb(sapply(vals, get_color))
+# Map each value to RGB (keeping NA as NA)
+colors_hex <- sapply(vals, get_color)
+cols <- col2rgb(colors_hex, alpha = FALSE)
 
-# Assign to RGB layers
+# Assign to RGB layers (NA values stay NA = transparent)
 values(snow_rgb[[1]]) <- cols[1, ]
 values(snow_rgb[[2]]) <- cols[2, ]
 values(snow_rgb[[3]]) <- cols[3, ]
