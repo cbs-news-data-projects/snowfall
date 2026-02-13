@@ -3,7 +3,7 @@
   "metadata": {
     "forecast_start": "2026-02-13T07:00:00-0500",
     "forecast_end": "2026-02-16T07:00:00-0500",
-    "issued": "2026-02-13T07:27:59-0500",
+    "issued": "2026-02-13T10:08:04-0500",
     "description": "72-hour snowfall forecast from NDFD (inches)"
   },
   "features": [
@@ -10684,7 +10684,7 @@
         "coordinates": [-73.1124, 42.8502]
       },
       "properties": {
-        "snowfall": 0.2
+        "snowfall": 0.19
       }
     },
     {
