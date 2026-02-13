@@ -1,17 +1,3 @@
-# Check if running interactively
-is_interactive <- interactive()
-
-# Get current hour in Eastern Time
-now_et <- format(Sys.time(), tz="America/New_York", "%H")
-
-# Quit only if not 7 AM ET AND not interactive
-if (!is_interactive && now_et != "07") {
-  quit(save = "no")
-}
-
-cat("Running script at", now_et, "ET\n")
-
-
 # Libraries
 library(httr)
 library(terra)
