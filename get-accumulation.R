@@ -4,7 +4,27 @@ library(terra)
 library(grDevices)
 
 # 1. Download NOHRSC 72-hour accumulation GRIB2
-url <- "https://www.nohrsc.noaa.gov/snowfall_v2/data/202602/sfav2_CONUS_72h_2026021212_grid184.grb2"
+# Get current date/time in UTC
+forecast_end_utc <- Sys.time()
+attr(forecast_end_utc, "tzone") <- "UTC"
+
+# Round to nearest 12-hour interval (00 or 12)
+hour <- as.numeric(format(forecast_end_utc, "%H"))
+if (hour < 12) {
+  forecast_end_utc <- as.POSIXct(format(forecast_end_utc, "%Y-%m-%d 00:00:00"), tz="UTC")
+} else {
+  forecast_end_utc <- as.POSIXct(format(forecast_end_utc, "%Y-%m-%d 12:00:00"), tz="UTC")
+}
+
+# Format date for URL (YYYYMMDDHH)
+date_str <- format(forecast_end_utc, "%Y%m%d%H")
+year_month <- format(forecast_end_utc, "%Y%m")
+
+# Construct URL dynamically
+url <- sprintf("https://www.nohrsc.noaa.gov/snowfall/data/%s/sfav2_CONUS_72h_%s_grid184.grb2",
+               year_month, date_str)
+
+cat("Downloading:", url, "\n")
 
 grib_file <- tempfile(fileext = ".grb2")
 res <- GET(url, write_disk(grib_file, overwrite = TRUE), progress())
@@ -17,8 +37,7 @@ snow <- rast(grib_file)
 # 3. Convert to inches (assuming data is in meters)
 snow_in <- snow * 39.3701   # meters → inches
 
-# 4. Extract time information from filename
-forecast_end_utc <- as.POSIXct("2026-02-12 12:00:00", tz="UTC")
+# 4. Calculate time range
 forecast_start_utc <- forecast_end_utc - 72*3600  # 72 hours before
 
 # Convert to Eastern time
