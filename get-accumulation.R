@@ -73,7 +73,7 @@ values(snow_rgb[[3]]) <- cols[3, ]
 # 10. Write colored GeoTIFF (ready for gdal2tiles)
 writeRaster(
   snow_rgb,
-  "snowfall_72hr_rgb.tif",
+  "snowfall_72hr.tif",
   overwrite = TRUE,
   wopt = list(gdal = c("COMPRESS=DEFLATE"))
 )

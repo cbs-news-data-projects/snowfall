@@ -31,14 +31,10 @@ jobs:
       - name: Run accumulation script
         run: Rscript get-accumulation.R
 
-      - name: Convert GeoTIFF to 8-bit RGB (if needed)
-        run: |
-          gdal_translate -ot Byte -scale 0 40 0 255 -of GTiff snowfall_72hr.tif snowfall_72hr_byte.tif
-
       - name: Generate tiles
         run: |
           mkdir -p tiles
-          gdal2tiles.py -z 4-9 --processes=4 snowfall_72hr_byte.tif tiles/
+          gdal2tiles.py -z 4-9 --processes=4 snowfall_72hr.tif tiles/
 
       - name: Commit and push tiles if changed
         run: |
