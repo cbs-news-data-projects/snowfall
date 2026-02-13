@@ -3,7 +3,7 @@
           <head>
             <meta charset="utf-8">
             <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
-            <title>snowfall_72hr_byte.tif</title>
+            <title>snowfall_72hr.tif</title>
 
             <!-- Leaflet -->
             <link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.5/dist/leaflet.css" />
@@ -57,7 +57,7 @@
 
         // Map
         var map = L.map('map', {
-            center: [36.492903908880024, -95.50029528089075],
+            center: [36.49290390888004, -95.50029528089074],
             zoom: 9,
             minZoom: 4,
             maxZoom: 9,
@@ -75,7 +75,7 @@
             return this._div;
         };
         title.update = function(props) {
-            this._div.innerHTML = "snowfall_72hr_byte.tif";
+            this._div.innerHTML = "snowfall_72hr.tif";
         };
         title.addTo(map);
 
@@ -97,7 +97,7 @@
         L.control.layers(basemaps, overlaymaps, {collapsed: false}).addTo(map);
 
         // Fit to overlay bounds (SW and NE points with (lat, lon))
-        map.fitBounds([[20.168911590454417, -60.877698336146715], [52.816896227305634, -130.12289222563479]]);
+        map.fitBounds([[20.168911590454428, -60.877698336146686], [52.816896227305655, -130.12289222563479]]);
 
         </script>
 

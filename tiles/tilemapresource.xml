@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
     <TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
-      <Title>snowfall_72hr_byte.tif</Title>
+      <Title>snowfall_72hr.tif</Title>
       <Abstract></Abstract>
       <SRS>EPSG:3857</SRS>
-      <BoundingBox minx="-130.12289222563479" miny="20.16891159045442" maxx="-60.87769833614671" maxy="52.81689622730563"/>
-      <Origin x="-130.12289222563479" y="20.16891159045442"/>
+      <BoundingBox minx="-130.12289222563479" miny="20.16891159045443" maxx="-60.87769833614669" maxy="52.81689622730566"/>
+      <Origin x="-130.12289222563479" y="20.16891159045443"/>
       <TileFormat width="256" height="256" mime-type="image/png" extension="png"/>
       <TileSets profile="mercator">
         <TileSet href="4" units-per-pixel="9783.93961875000059" order="4"/>
