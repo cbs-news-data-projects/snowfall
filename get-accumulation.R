@@ -2,18 +2,19 @@
 library(httr)
 library(terra)
 library(grDevices)
+library(jsonlite)
 
 # 1. Download NOHRSC 72-hour accumulation GRIB2
 # Get current date/time in UTC
-forecast_end_utc <- Sys.time()
-attr(forecast_end_utc, "tzone") <- "UTC"
+current_time <- Sys.time()
+attr(current_time, "tzone") <- "UTC"
 
 # Round to nearest 12-hour interval (00 or 12)
-hour <- as.numeric(format(forecast_end_utc, "%H"))
+hour <- as.numeric(format(current_time, "%H"))
 if (hour < 12) {
-  forecast_end_utc <- as.POSIXct(format(forecast_end_utc, "%Y-%m-%d 00:00:00"), tz="UTC")
+  forecast_end_utc <- as.POSIXct(format(current_time, "%Y-%m-%d 00:00:00"), tz="UTC")
 } else {
-  forecast_end_utc <- as.POSIXct(format(forecast_end_utc, "%Y-%m-%d 12:00:00"), tz="UTC")
+  forecast_end_utc <- as.POSIXct(format(current_time, "%Y-%m-%d 12:00:00"), tz="UTC")
 }
 
 # Format date for URL (YYYYMMDDHH)
@@ -33,6 +34,13 @@ if (res$status_code != 200) stop("Download failed!")
 
 # 2. Read GRIB
 snow <- rast(grib_file)
+
+# Extract actual date from GRIB metadata
+grib_time <- time(snow)
+if (!is.null(grib_time) && length(grib_time) > 0) {
+  forecast_end_utc <- as.POSIXct(grib_time[1], tz="UTC")
+  cat("Using date from GRIB metadata:", format(forecast_end_utc, "%Y-%m-%d %H:%M UTC"), "\n")
+}
 
 # 3. Convert to inches (assuming data is in meters)
 snow_in <- snow * 39.3701   # meters → inches
@@ -91,13 +99,35 @@ values(snow_rgb[[1]]) <- cols[1, ]
 values(snow_rgb[[2]]) <- cols[2, ]
 values(snow_rgb[[3]]) <- cols[3, ]
 
-# 10. Write colored GeoTIFF (ready for gdal2tiles)
+# 10. Write colored GeoTIFF with metadata (ready for gdal2tiles)
 writeRaster(
   snow_rgb,
   "snowfall_72hr.tif",
   overwrite = TRUE,
   datatype = "INT1U",
-  wopt = list(gdal = c("COMPRESS=DEFLATE", "PHOTOMETRIC=RGB"))
+  wopt = list(gdal = c(
+    "COMPRESS=DEFLATE",
+    "PHOTOMETRIC=RGB",
+    sprintf("TIFFTAG_DATETIME=%s", format(Sys.time(), "%Y:%m:%d %H:%M:%S")),
+    sprintf("TIFFTAG_IMAGEDESCRIPTION=72hr snow accumulation: %s to %s", forecast_start_est, forecast_end_est)
+  ))
+)
+
+# 11. Write metadata JSON file for tiles
+metadata <- list(
+  type = "accumulation",
+  forecast_start = forecast_start_est,
+  forecast_end = forecast_end_est,
+  issued = format(Sys.time(), tz="America/New_York", "%Y-%m-%dT%H:%M:%S%z"),
+  description = "72-hour observed snowfall accumulation (inches)"
+)
+
+write_json(
+  metadata,
+  "tiles/accumulation/metadata.json",
+  pretty = TRUE,
+  auto_unbox = TRUE
 )
 
 cat("Saved colored RGB GeoTIFF: snowfall_72hr.tif\n")
+cat("Saved metadata: tiles/accumulation/metadata.json\n")

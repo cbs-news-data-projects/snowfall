@@ -2,7 +2,7 @@ name: Update 3-day snow forecast and accumulation
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 12 * * *"  # 7 AM EST / 8 AM EDT
   workflow_dispatch:
 
 jobs:
@@ -35,6 +35,11 @@ jobs:
           Rscript -e 'if (!require("terra")) install.packages("terra", repos="https://cloud.r-project.org")'
           Rscript -e 'if (!require("jsonlite")) install.packages("jsonlite", repos="https://cloud.r-project.org")'
 
+      - name: Create tile directories
+        run: |
+          mkdir -p tiles/accumulation
+          mkdir -p tiles/forecast
+
       - name: Run forecast script
         run: Rscript get-forecast.R
 
@@ -43,12 +48,10 @@ jobs:
 
       - name: Generate tiles for accumulation
         run: |
-          mkdir -p tiles/accumulation
           gdal2tiles.py -z 4-9 --processes=$(nproc) -r near snowfall_72hr.tif tiles/accumulation/
 
       - name: Generate tiles for forecast
         run: |
-          mkdir -p tiles/forecast
           gdal2tiles.py -z 4-9 --processes=$(nproc) -r near snowfall_forecast_72hr.tif tiles/forecast/
 
       - name: Commit and push tiles if changed

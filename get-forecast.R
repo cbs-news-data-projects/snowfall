@@ -2,6 +2,7 @@
 library(httr)
 library(terra)
 library(grDevices)
+library(jsonlite)
 
 # 1. Download latest NDFD snowfall GRIB2
 url <- "https://tgftp.nws.noaa.gov/SL.us008001/ST.opnl/DF.gr2/DC.ndfd/AR.conus/VP.001-003/ds.snow.bin"
@@ -88,14 +89,37 @@ values(snow_rgb[[1]]) <- cols[1, ]
 values(snow_rgb[[2]]) <- cols[2, ]
 values(snow_rgb[[3]]) <- cols[3, ]
 
-# 10. Write colored GeoTIFF (ready for gdal2tiles)
+# 10. Write colored GeoTIFF with metadata (ready for gdal2tiles)
 writeRaster(
   snow_rgb,
   "snowfall_forecast_72hr.tif",
   overwrite = TRUE,
   datatype = "INT1U",
-  wopt = list(gdal = c("COMPRESS=DEFLATE", "PHOTOMETRIC=RGB"))
+  wopt = list(gdal = c(
+    "COMPRESS=DEFLATE",
+    "PHOTOMETRIC=RGB",
+    sprintf("TIFFTAG_DATETIME=%s", format(Sys.time(), "%Y:%m:%d %H:%M:%S")),
+    sprintf("TIFFTAG_IMAGEDESCRIPTION=Snowfall forecast (%d layers): %s to %s", max_layers, forecast_start_est, forecast_end_est)
+  ))
+)
+
+# 11. Write metadata JSON file for tiles
+metadata <- list(
+  type = "forecast",
+  forecast_start = forecast_start_est,
+  forecast_end = forecast_end_est,
+  issued = format(Sys.time(), tz="America/New_York", "%Y-%m-%dT%H:%M:%S%z"),
+  layers = max_layers,
+  description = sprintf("Snowfall forecast from NDFD (inches, %d layers)", max_layers)
+)
+
+write_json(
+  metadata,
+  "tiles/forecast/metadata.json",
+  pretty = TRUE,
+  auto_unbox = TRUE
 )
 
 cat("Saved colored RGB GeoTIFF: snowfall_forecast_72hr.tif\n")
+cat("Saved metadata: tiles/forecast/metadata.json\n")
 cat("Forecast period:", forecast_start_est, "to", forecast_end_est, "\n")
