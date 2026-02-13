@@ -34,7 +34,7 @@ jobs:
       - name: Generate tiles
         run: |
           mkdir -p tiles
-          gdal2tiles.py -z 4-9 --processes=4 snowfall_72hr.tif tiles/
+          gdal2tiles.py -z 4-9 --processes=$(nproc) -r near snowfall_72hr.tif tiles/
 
       - name: Commit and push tiles if changed
         run: |

@@ -75,7 +75,8 @@ writeRaster(
   snow_rgb,
   "snowfall_72hr.tif",
   overwrite = TRUE,
-  wopt = list(gdal = c("COMPRESS=DEFLATE"))
+  datatype = "INT1U",
+  wopt = list(gdal = c("COMPRESS=DEFLATE", "PHOTOMETRIC=RGB"))
 )
 
-cat("Saved colored RGB GeoTIFF: snowfall_72hr_rgb.tif\n")
+cat("Saved colored RGB GeoTIFF: snowfall_72hr.tif\n")
