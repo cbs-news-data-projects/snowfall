@@ -1,7 +1,7 @@
 # Libraries
 library(httr)
 library(terra)
-library(jsonlite)
+library(grDevices)
 
 # 1. Download NOHRSC 72-hour accumulation GRIB2
 url <- "https://www.nohrsc.noaa.gov/snowfall_v2/data/202602/sfav2_CONUS_72h_2026021212_grid184.grb2"
@@ -18,8 +18,6 @@ snow <- rast(grib_file)
 snow_in <- snow * 39.3701   # meters → inches
 
 # 4. Extract time information from filename
-# sfav2_CONUS_72h_2026021212_grid184.grb2
-# This represents 72-hour accumulation ending at 2026-02-12 12:00 UTC
 forecast_end_utc <- as.POSIXct("2026-02-12 12:00:00", tz="UTC")
 forecast_start_utc <- forecast_end_utc - 72*3600  # 72 hours before
 
@@ -32,57 +30,52 @@ forecast_end_est <- format(forecast_end_utc,
                            tz="America/New_York",
                            "%Y-%m-%dT%H:%M:%S%z")
 
-# 5. Reproject to WGS84
-snow_wgs84 <- project(snow_in, "EPSG:4326")
+# 5. Reproject to Web Mercator (better for tiling)
+snow_3857 <- project(snow_in, "EPSG:3857")
 
-# 6. Reduce density (optional but recommended)
-snow_coarse <- aggregate(
-  snow_wgs84,
-  fact = 10,
-  fun = mean,
-  na.rm = TRUE
+# 6. Remove near-zero noise
+snow_3857[snow_3857 < 0.01] <- 0
+
+# 7. Clamp extreme values
+snow_3857[snow_3857 > 40] <- 40
+
+# Define color mapping function with NA handling
+get_color <- function(snowfall) {
+  if (is.na(snowfall) || snowfall < 0.01) return("#c7d6ef")  # background / near zero
+  if (snowfall < 2) return("#8faedf")
+  if (snowfall < 3) return("#5786d0")
+  if (snowfall < 4) return("#1f5dc0")
+  if (snowfall < 6) return("#013f8c")
+  if (snowfall < 8) return("#fad089")
+  if (snowfall < 12) return("#f1b24b")
+  if (snowfall < 18) return("#fd8724")
+  if (snowfall < 24) return("#cf512b")
+  if (snowfall < 30) return("#a5091e")
+  if (snowfall < 36) return("#820415")
+  return("#2d1b47")
+}
+
+# 9. Create RGB raster
+snow_rgb <- rast(nlyrs = 3, crs = crs(snow_3857),
+                 ext = ext(snow_3857), resolution = res(snow_3857))
+
+# Get flattened values
+vals <- values(snow_3857)
+
+# Map each value to RGB
+cols <- col2rgb(sapply(vals, get_color))
+
+# Assign to RGB layers
+values(snow_rgb[[1]]) <- cols[1, ]
+values(snow_rgb[[2]]) <- cols[2, ]
+values(snow_rgb[[3]]) <- cols[3, ]
+
+# 10. Write colored GeoTIFF (ready for gdal2tiles)
+writeRaster(
+  snow_rgb,
+  "snowfall_72hr_rgb.tif",
+  overwrite = TRUE,
+  wopt = list(gdal = c("COMPRESS=DEFLATE"))
 )
 
-# 7. Convert raster → points
-snow_pts <- as.data.frame(snow_coarse, xy = TRUE, na.rm = TRUE)
-colnames(snow_pts) <- c("lon", "lat", "snow_in")
-
-snow_pts <- subset(snow_pts, snow_in > 0.01)
-
-# 8. Issued time (auto)
-issued_time_est <- format(Sys.time(),
-                          tz="America/New_York",
-                          "%Y-%m-%dT%H:%M:%S%z")
-
-# 9. Build GeoJSON
-geojson <- list(
-  type = "FeatureCollection",
-  metadata = list(
-    forecast_start = forecast_start_est,
-    forecast_end = forecast_end_est,
-    issued = issued_time_est,
-    description = "72-hour snowfall accumulation from NOHRSC (inches)"
-  ),
-  features = lapply(seq_len(nrow(snow_pts)), function(i) {
-    list(
-      type = "Feature",
-      geometry = list(
-        type = "Point",
-        coordinates = c(snow_pts$lon[i], snow_pts$lat[i])
-      ),
-      properties = list(
-        snowfall = round(snow_pts$snow_in[i], 2)
-      )
-    )
-  })
-)
-
-# 10. Save output
-write_json(
-  geojson,
-  "snowfall_accumulation_72hr.json",
-  pretty = TRUE,
-  auto_unbox = TRUE
-)
-
-cat("Successfully saved snowfall_accumulation_72hr.json\n")
+cat("Saved colored RGB GeoTIFF: snowfall_72hr_rgb.tif\n")

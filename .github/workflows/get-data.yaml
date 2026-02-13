@@ -19,7 +19,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libgdal-dev libproj-dev libgeos-dev
+          sudo apt-get install -y libcurl4-openssl-dev libgdal-dev libproj-dev libgeos-dev gdal-bin python3-gdal
 
       - name: Install R packages
         run: |
@@ -31,10 +31,19 @@ jobs:
       - name: Run accumulation script
         run: Rscript get-accumulation.R
 
-      - name: Commit and push if changed
+      - name: Convert GeoTIFF to 8-bit RGB (if needed)
+        run: |
+          gdal_translate -ot Byte -scale 0 40 0 255 -of GTiff snowfall_72hr.tif snowfall_72hr_byte.tif
+
+      - name: Generate tiles
+        run: |
+          mkdir -p tiles
+          gdal2tiles.py -z 4-9 --processes=4 snowfall_72hr_byte.tif tiles/
+
+      - name: Commit and push tiles if changed
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
-          git add .
-          git diff --cached --quiet || git commit -m "Auto update forecast + timestamp"
+          git add tiles/
+          git diff --cached --quiet || git commit -m "Auto update forecast tiles + timestamp"
           git push
