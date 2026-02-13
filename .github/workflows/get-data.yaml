@@ -41,15 +41,20 @@ jobs:
       - name: Run accumulation script
         run: Rscript get-accumulation.R
 
-      - name: Generate tiles
+      - name: Generate tiles for accumulation
         run: |
-          mkdir -p tiles
-          gdal2tiles.py -z 4-12 --processes=$(nproc) -r near snowfall_72hr.tif tiles/
+          mkdir -p tiles/accumulation
+          gdal2tiles.py -z 4-12 --processes=$(nproc) -r near snowfall_72hr.tif tiles/accumulation/
+
+      - name: Generate tiles for forecast
+        run: |
+          mkdir -p tiles/forecast
+          gdal2tiles.py -z 4-12 --processes=$(nproc) -r near snowfall_forecast_72hr.tif tiles/forecast/
 
       - name: Commit and push tiles if changed
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
           git add tiles/
-          git diff --cached --quiet || git commit -m "Auto update forecast tiles + timestamp"
+          git diff --cached --quiet || git commit -m "Auto update accumulation and forecast tiles"
           git push
