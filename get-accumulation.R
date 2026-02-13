@@ -39,9 +39,10 @@ snow_3857[snow_3857 < 0.01] <- 0
 # 7. Clamp extreme values
 snow_3857[snow_3857 > 40] <- 40
 
-# Define color mapping function - returns NA for no data/near zero
+# Define color mapping function - returns NA for no data or zero
 get_color <- function(snowfall) {
-  if (is.na(snowfall) || snowfall < 0.01) return(NA)  # transparent
+  if (is.na(snowfall) || snowfall == 0) return(NA)  # transparent for NA or zero
+  if (snowfall < 1) return("#c7d6ef")  # light blue for trace to <1"
   if (snowfall < 2) return("#8faedf")
   if (snowfall < 3) return("#5786d0")
   if (snowfall < 4) return("#1f5dc0")
