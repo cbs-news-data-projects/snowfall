@@ -1,7 +1,7 @@
 {
   "type": "accumulation",
-  "forecast_start": "2026-02-10T07:00:00-0500",
-  "forecast_end": "2026-02-13T07:00:00-0500",
-  "issued": "2026-02-13T14:57:10-0500",
+  "forecast_start": "2026-02-14T07:00:00-0500",
+  "forecast_end": "2026-02-17T07:00:00-0500",
+  "issued": "2026-02-17T08:37:07-0500",
   "description": "72-hour observed snowfall accumulation (inches)"
 }
