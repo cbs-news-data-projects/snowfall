@@ -30,7 +30,9 @@ cat("Downloading:", url, "\n")
 grib_file <- tempfile(fileext = ".grb2")
 res <- GET(url, write_disk(grib_file, overwrite = TRUE), progress())
 
-if (res$status_code != 200) stop("Download failed!")
+if (res$status_code != 200) {
+  stop(sprintf("Download failed! Status code: %d, URL: %s", res$status_code, url))
+}
 
 # 2. Read GRIB
 snow <- rast(grib_file)
