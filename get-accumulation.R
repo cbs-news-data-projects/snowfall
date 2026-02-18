@@ -17,21 +17,36 @@ if (hour < 12) {
   forecast_end_utc <- as.POSIXct(format(current_time, "%Y-%m-%d 12:00:00"), tz="UTC")
 }
 
-# Format date for URL (YYYYMMDDHH)
-date_str <- format(forecast_end_utc, "%Y%m%d%H")
-year_month <- format(forecast_end_utc, "%Y%m")
-
-# Construct URL dynamically
-url <- sprintf("https://www.nohrsc.noaa.gov/snowfall/data/%s/sfav2_CONUS_72h_%s_grid184.grb2",
-               year_month, date_str)
-
-cat("Downloading:", url, "\n")
-
+# Try downloading current and up to 3 previous 12-hour intervals
 grib_file <- tempfile(fileext = ".grb2")
-res <- GET(url, write_disk(grib_file, overwrite = TRUE), progress())
+success <- FALSE
 
-if (res$status_code != 200) {
-  stop(sprintf("Download failed! Status code: %d, URL: %s", res$status_code, url))
+for (attempt in 0:3) {
+  try_time <- forecast_end_utc - (attempt * 12 * 3600)
+  date_str <- format(try_time, "%Y%m%d%H")
+  year_month <- format(try_time, "%Y%m")
+  
+  url <- sprintf("https://www.nohrsc.noaa.gov/snowfall/data/%s/sfav2_CONUS_72h_%s_grid184.grb2",
+                 year_month, date_str)
+  
+  cat("Attempting:", url, "\n")
+  
+  res <- GET(url, write_disk(grib_file, overwrite = TRUE), progress())
+  
+  if (res$status_code == 200) {
+    forecast_end_utc <- try_time
+    cat("Successfully downloaded data for:", format(try_time, "%Y-%m-%d %H:%M UTC"), "\n")
+    success <- TRUE
+    break
+  } else if (res$status_code == 404) {
+    cat("File not found (404), trying earlier time...\n")
+  } else {
+    cat("Download failed with status code:", res$status_code, "\n")
+  }
+}
+
+if (!success) {
+  stop("Could not download data from current or previous 3 time intervals")
 }
 
 # 2. Read GRIB
