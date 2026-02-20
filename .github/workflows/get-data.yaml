@@ -2,7 +2,7 @@ name: Update 3-day snow forecast and accumulation
 
 on:
   schedule:
-    - cron: "0 12 * * *"  # 7 AM EST / 8 AM EDT
+    - cron: "10 12 * * *"  # 7:10 AM EST / 8:10 AM EDT
   workflow_dispatch:
 
 jobs:
