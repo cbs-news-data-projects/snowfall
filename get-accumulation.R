@@ -5,17 +5,13 @@ library(grDevices)
 library(jsonlite)
 
 # 1. Download NOHRSC 72-hour accumulation GRIB2
-# Get current date/time in UTC
-current_time <- Sys.time()
-attr(current_time, "tzone") <- "UTC"
+# Get current date in Eastern time, then convert to UTC for 7pm ET (00:00 UTC next day)
+current_time_et <- Sys.time()
+attr(current_time_et, "tzone") <- "America/New_York"
+current_date_et <- as.Date(current_time_et)
 
-# Round to nearest 12-hour interval (00 or 12)
-hour <- as.numeric(format(current_time, "%H"))
-if (hour < 12) {
-  forecast_end_utc <- as.POSIXct(format(current_time, "%Y-%m-%d 00:00:00"), tz="UTC")
-} else {
-  forecast_end_utc <- as.POSIXct(format(current_time, "%Y-%m-%d 12:00:00"), tz="UTC")
-}
+# Set to 7pm ET today (which is 00:00 UTC tomorrow)
+forecast_end_utc <- as.POSIXct(paste(current_date_et + 1, "00:00:00"), tz="UTC")
 
 # Try downloading current and up to 3 previous 12-hour intervals
 grib_file <- tempfile(fileext = ".grb2")
