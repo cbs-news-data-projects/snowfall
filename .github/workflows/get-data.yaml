@@ -46,6 +46,11 @@ jobs:
       - name: Run accumulation script
         run: Rscript get-accumulation.R
 
+      - name: Backup metadata files
+        run: |
+          cp tiles/accumulation/metadata.json metadata_accumulation_backup.json
+          cp tiles/forecast/metadata.json metadata_forecast_backup.json
+
       - name: Generate tiles for accumulation
         run: |
           gdal2tiles.py -z 4-9 --processes=$(nproc) -r near snowfall_72hr.tif tiles/accumulation/
@@ -53,6 +58,11 @@ jobs:
       - name: Generate tiles for forecast
         run: |
           gdal2tiles.py -z 4-9 --processes=$(nproc) -r near snowfall_forecast_72hr.tif tiles/forecast/
+
+      - name: Restore metadata files
+        run: |
+          mv metadata_accumulation_backup.json tiles/accumulation/metadata.json
+          mv metadata_forecast_backup.json tiles/forecast/metadata.json
 
       - name: Commit and push tiles if changed
         run: |
