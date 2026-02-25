@@ -103,23 +103,11 @@ writeRaster(
   ))
 )
 
-# 11. Write metadata JSON file for tiles
-metadata <- list(
-  type = "forecast",
-  forecast_start = forecast_start_est,
-  forecast_end = forecast_end_est,
-  issued = format(Sys.time(), tz="America/New_York", "%Y-%m-%dT%H:%M:%S%z"),
-  layers = max_layers,
-  description = sprintf("Snowfall forecast from NDFD (inches, %d layers)", max_layers)
-)
-
-write_json(
-  metadata,
-  "tiles/forecast/metadata.json",
-  pretty = TRUE,
-  auto_unbox = TRUE
-)
+# 11. Save forecast dates and layer count to temporary files for later metadata creation
+writeLines(forecast_start_est, ".forecast_forecast_start")
+writeLines(forecast_end_est, ".forecast_forecast_end")
+writeLines(as.character(max_layers), ".forecast_layers")
 
 cat("Saved colored RGB GeoTIFF: snowfall_forecast_72hr.tif\n")
-cat("Saved metadata: tiles/forecast/metadata.json\n")
+cat("Saved forecast dates for metadata\n")
 cat("Forecast period:", forecast_start_est, "to", forecast_end_est, "\n")

@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+# Temporary metadata files
+.accumulation_forecast_start
+.accumulation_forecast_end
+.forecast_forecast_start
+.forecast_forecast_end
+.forecast_layers
