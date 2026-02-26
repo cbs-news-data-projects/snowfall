@@ -5,12 +5,16 @@ library(grDevices)
 library(jsonlite)
 
 # 1. Download NOHRSC 72-hour accumulation GRIB2
-# Get current date in Eastern time, then convert to UTC for 7pm ET (00:00 UTC next day)
+# Get current date in Eastern time
 current_time_et <- Sys.time()
 attr(current_time_et, "tzone") <- "America/New_York"
 current_date_et <- as.Date(current_time_et)
 
-# Set to 7pm ET today (which is 00:00 UTC tomorrow)
+# Set forecast period based on current date (always today at 7pm ET back to 3 days ago at 7pm ET)
+forecast_end_et <- as.POSIXct(paste(current_date_et, "19:00:00"), tz="America/New_York")
+forecast_start_et <- forecast_end_et - 72*3600  # 72 hours before
+
+# Convert to UTC for downloading (7pm ET today = 00:00 UTC tomorrow)
 forecast_end_utc <- as.POSIXct(paste(current_date_et + 1, "00:00:00"), tz="UTC")
 
 # Try downloading current and up to 3 previous 12-hour intervals
@@ -30,7 +34,6 @@ for (attempt in 0:3) {
   res <- GET(url, write_disk(grib_file, overwrite = TRUE), progress())
   
   if (res$status_code == 200) {
-    forecast_end_utc <- try_time
     cat("Successfully downloaded data for:", format(try_time, "%Y-%m-%d %H:%M UTC"), "\n")
     success <- TRUE
     break
@@ -48,25 +51,15 @@ if (!success) {
 # 2. Read GRIB
 snow <- rast(grib_file)
 
-# Extract actual date from GRIB metadata
-grib_time <- time(snow)
-if (!is.null(grib_time) && length(grib_time) > 0) {
-  forecast_end_utc <- as.POSIXct(grib_time[1], tz="UTC")
-  cat("Using date from GRIB metadata:", format(forecast_end_utc, "%Y-%m-%d %H:%M UTC"), "\n")
-}
-
 # 3. Convert to inches (assuming data is in meters)
 snow_in <- snow * 39.3701   # meters → inches
 
-# 4. Calculate time range
-forecast_start_utc <- forecast_end_utc - 72*3600  # 72 hours before
-
-# Convert to Eastern time
-forecast_start_est <- format(forecast_start_utc,
+# 4. Format time range as strings for metadata
+forecast_start_est <- format(forecast_start_et,
                              tz="America/New_York",
                              "%Y-%m-%dT%H:%M:%S%z")
 
-forecast_end_est <- format(forecast_end_utc,
+forecast_end_est <- format(forecast_end_et,
                            tz="America/New_York",
                            "%Y-%m-%dT%H:%M:%S%z")
 
