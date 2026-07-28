@@ -9,6 +9,12 @@ jobs:
   update-forecast:
     runs-on: ubuntu-latest
 
+    # Declared explicitly, NOT inherited from the org default — orgs differ on
+    # whether GITHUB_TOKEN defaults to read or write, so a repo transfer can
+    # silently strip push access and fail this job at `git push` with a 403.
+    permissions:
+      contents: write          # to commit the refreshed tiles
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
