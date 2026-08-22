@@ -1,8 +1,8 @@
 {
   "type": "forecast",
-  "forecast_start": "2026-08-21T08:00:00-0400",
-  "forecast_end": "2026-08-24T08:00:00-0400",
-  "issued": "2026-08-21T08:20:49-0400",
+  "forecast_start": "2026-08-22T08:00:00-0400",
+  "forecast_end": "2026-08-25T08:00:00-0400",
+  "issued": "2026-08-22T08:20:13-0400",
   "layers": 12,
   "description": "Snowfall forecast from NDFD (inches, 12 layers)"
 }
